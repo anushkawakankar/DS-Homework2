@@ -1,5 +1,7 @@
 #include<stdio.h>
 #include<mpi.h>
+#include<bits/stdc++.h>
+using namespace std;
 #define MAX 100
 
 #define zero 0
@@ -18,10 +20,12 @@ void dfs(int visited[MAX],int start,int curr,int cycle_len,int *cnt,int V){
         else
             return;
     }
-    for(int i = zero;i < V;++i){
-        if(!visited[i] && graph[curr][i]){
-            dfs(visited,start,i,cycle_len-one,cnt,V);
-        }
+    int i = zero;
+    while (i<V) {
+      if(!visited[i] && graph[curr][i])
+          dfs(visited,start,i,cycle_len-one,cnt,V);
+      i++;
+
     }
     visited[curr] = zero;
 }
@@ -100,20 +104,23 @@ int func(int t1, int t2, int V, int n,int rank, int numprocs)
             }
 
     int main(int argc, char** argv){
-      int numprocs,rank;
     MPI_Init (&argc, &argv);
+    int numprocs;
     MPI_Comm_size (MPI_COMM_WORLD, &numprocs);
+    int V;
+    int rank;
     MPI_Comm_rank (MPI_COMM_WORLD, &rank);
 
-        int V;
 
     if(rank == 0){
         int e;
-            scanf("%d %d",&V,&e);
+            cin>>V;
+            cin>>e;
 
             int s,d;
             for(int i = 0;i < e;i++){
-                scanf("%d %d",&s,&d);
+                cin>>s;
+                cin>>d;
                 s--;
                 d--;
                 graph[s][d] = 1;
@@ -125,7 +132,7 @@ int func(int t1, int t2, int V, int n,int rank, int numprocs)
     int chaar = func(20,30,V,4,rank,numprocs);
 
     if(rank == 0)
-      printf("%d %d\n",teen,chaar);
+      cout<<teen<<" "<<chaar<<endl;
 
 
     MPI_Finalize();
