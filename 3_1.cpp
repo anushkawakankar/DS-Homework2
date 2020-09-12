@@ -103,7 +103,7 @@ int func(int t1, int t2, int V, int n,int rank, int numprocs)
 
             }
 
-    int main(int argc, char** argv){
+  int main(int argc, char** argv){
     MPI_Init (&argc, &argv);
     int numprocs;
     MPI_Comm_size (MPI_COMM_WORLD, &numprocs);
