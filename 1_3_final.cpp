@@ -38,47 +38,46 @@ int primes_before_n(int n)
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &p);
-
   int low  = 3 + ((rank) * (n-1) / (p) / 2)  * 2;
-  int high = 3 + highest_val_in_block(rank, p, n - 1) * 2;
-  int size = size_of_block(rank, p, n - 1);
+   int high = 3 + highest_val_in_block(rank, p, n - 1) * 2;
+   int size = size_of_block(rank, p, n - 1);
 
 
-  int proc0_size = (n-1)/p;
+   int proc0_size = (n-1)/p;
 
 
-  for(int prime = 3; prime <= sqrtn; prime += 2)
-  {
-          if(primes[prime] == 1) continue;
+   for(int prime = 3; prime <= sqrtn; prime += 2)
+   {
+           if(primes[prime] == 1) continue;
 
-          for(int prime_mult = prime << 1; prime_mult<=sqrtn; prime_mult+=prime)
-          {
-                  primes[prime_mult] = 1;
-          }
-  }
+           for(int prime_mult = prime << 1; prime_mult<=sqrtn; prime_mult+=prime)
+           {
+                   primes[prime_mult] = 1;
+           }
+   }
 
-  char* marked = (char*)calloc(size * sizeof(char),1);
-  int num_per_block = 1024*1024;
-  int block_low = low;
-  int block_high = min(high, low+num_per_block*2);
+   char* marked = (char*)calloc(size * sizeof(char),1);
+   int num_per_block = 1024*1024;
+   int block_low = low;
+   int block_high = min(high, low+num_per_block*2);
 
-    int block_ind1=0, prime, first, first_val_ind;
+     int block_ind1=0, prime, first, first_val_ind;
 
-    while(block_ind1<size)
-    {
-      prime = 3;
-      while (prime<=sqrtn)
-      {
+     while(block_ind1<size)
+     {
+       prime = 3;
+       while (prime<=sqrtn)
+       {
 
-              if(primes[prime]!=1)
-              {
+               if(primes[prime]!=1)
+               {
 
-                if(prime > sqrt(block_low))
-                        first = prime*prime;
+                 if(prime > sqrt(block_low))
+                         first = prime*prime;
 
-                else
-                {
-                        if((block_low % prime))
+                 else
+                 {
+                         if((block_low % prime))
                                 first = prime - (block_low%prime)+ block_low;
                         else
                                 first = block_low;
@@ -117,32 +116,37 @@ int primes_before_n(int n)
             i++;
            }
 
-
-
            MPI_Reduce(&count, &global_count, 1, MPI_INT,MPI_SUM, 0, MPI_COMM_WORLD);
 
-           if(rank == 0){
-             global_count += 1;
-             return global_count;
+         if(rank == 0){
+           global_count += 1;
+           return global_count;
+         }
+
+         return 0;
+ }
+
+
+ int main(int argc, char** argv){
+         MPI_Init(&argc, &argv);
+         MPI_Barrier(MPI_COMM_WORLD);
+         int rank,  numprocs;
+         MPI_Comm_rank (MPI_COMM_WORLD, &rank);
+         MPI_Comm_size (MPI_COMM_WORLD, &numprocs);
+        int p;
+        if (!rank) {
+          cin >> p;
+        }
+        MPI_Bcast(&p, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+
+           int ans1 = primes_before_n(p);
+           int ans2 = primes_before_n(p-1);
+           if(rank == 0) {
+            cout<<ans1-ans2<<endl;
            }
 
-           return 0;
-   }
+         MPI_Finalize();
 
-
-   int main(int argc, char** argv){
-           MPI_Init(&argc, &argv);
-           MPI_Barrier(MPI_COMM_WORLD);
-           int rank,  numprocs;
-           MPI_Comm_rank (MPI_COMM_WORLD, &rank);
-           MPI_Comm_size (MPI_COMM_WORLD, &numprocs);
-           int p = atoi(argv[1]);
-             int ans1 = primes_before_n(p);
-             int ans2 = primes_before_n(p-1);
-             if(rank == 0)
-             cout<<ans1-ans2<<endl;
-
-           MPI_Finalize();
-
-           return 0;
-   }
+         return 0;
+ }
