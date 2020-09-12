@@ -2,25 +2,28 @@
 #include<mpi.h>
 #define MAX 100
 
-  int graph[MAX][MAX] = {0};
+#define zero 0
+#define one 1
 
-void dfs(int graph[MAX][MAX],int vis[MAX],int start,int curnode,int cycle_len,int *cnt,int V){
-    vis[curnode] = 1;
-    if(cycle_len == 0){
-        vis[curnode] = 0;
-        if(graph[curnode][start]){
-            *cnt = *cnt + 1;
+int graph[MAX][MAX] = {0};
+
+void dfs(int visited[MAX],int start,int curr,int cycle_len,int *cnt,int V){
+    visited[curr] = one;
+    if(cycle_len == zero){
+        visited[curr] = zero;
+        if(graph[curr][start]){
+            *cnt = *cnt + one;
             return;
         }
         else
             return;
     }
-    for(int i = 0;i < V;++i){
-        if(!vis[i] && graph[curnode][i]){
-            dfs(graph,vis,start,i,cycle_len-1,cnt,V);
+    for(int i = zero;i < V;++i){
+        if(!visited[i] && graph[curr][i]){
+            dfs(visited,start,i,cycle_len-one,cnt,V);
         }
     }
-    vis[curnode] = 0;
+    visited[curr] = zero;
 }
 
 int func(int t1, int t2, int V, int n,int rank, int numprocs)
@@ -29,67 +32,67 @@ int func(int t1, int t2, int V, int n,int rank, int numprocs)
     MPI_Status status;
 
 
-        int vis[MAX] = {0};
-        int totalCycles = 0;
+        int visited[MAX] = {0};
+        int totalCycles = zero;
 
-    if(rank == 0)
+    if(rank == zero)
     {
-      int nodesPerProcess = (V-(n-1))/(numprocs-1);
-        int leftOverNodes = (V-(n-1)) % (numprocs - 1);
+      int nodesPerProcess = (V-(n-one))/(numprocs-one);
+        int leftOverNodes = (V-(n-one)) % (numprocs - one);
 
-        int lower_bound = 0,upper_bound = nodesPerProcess - 1;
+        int low_element = zero,high_element = nodesPerProcess - one;
 
-        if(leftOverNodes != 0){
-            upper_bound = leftOverNodes - 1;
+        if(leftOverNodes != zero){
+            high_element = leftOverNodes - one;
 
-            int cnt = 0;
-            for(int node = lower_bound; node <= upper_bound; ++node){
-                dfs(graph,vis,node,node,n-1,&cnt,V);
-                vis[node] = 1;
+            int cnt = zero;
+            for(int node = low_element; node <= high_element; ++node){
+                dfs(visited,node,node,n-one,&cnt,V);
+                visited[node] = one;
             }
             totalCycles += cnt;
 
-            lower_bound = leftOverNodes;
-            upper_bound += nodesPerProcess;
+            low_element = leftOverNodes;
+            high_element += nodesPerProcess;
         }
 
-        for(int dest = 1;dest < numprocs;dest++){
-            MPI_Send(&lower_bound, 1, MPI_INT, dest, t1, MPI_COMM_WORLD);
-            MPI_Send(&upper_bound, 1, MPI_INT, dest, t1 + 1, MPI_COMM_WORLD);
-            MPI_Send(&V, 1, MPI_INT, dest, t1 + 2, MPI_COMM_WORLD);
-            MPI_Send(&n, 1, MPI_INT, dest, t1 + 3, MPI_COMM_WORLD);
-            lower_bound = upper_bound + 1;
-                        upper_bound +=  nodesPerProcess;
+        for(int dest = one;dest < numprocs;dest++){
+            MPI_Send(&low_element, one, MPI_INT, dest, t1, MPI_COMM_WORLD);
+            MPI_Send(&high_element, one, MPI_INT, dest, t1 + one, MPI_COMM_WORLD);
+            MPI_Send(&V, one, MPI_INT, dest, t1 + 2, MPI_COMM_WORLD);
+            MPI_Send(&n, one, MPI_INT, dest, t1 + 3, MPI_COMM_WORLD);
+            low_element = high_element + one;
+                        high_element +=  nodesPerProcess;
                     }
                 }
 
-                MPI_Bcast(&graph, MAX * MAX, MPI_INT, 0, MPI_COMM_WORLD);
-                MPI_Bcast(&vis,MAX,MPI_INT,0,MPI_COMM_WORLD);
+                MPI_Bcast(&graph, MAX * MAX, MPI_INT, zero, MPI_COMM_WORLD);
+                MPI_Bcast(&visited,MAX,MPI_INT,zero,MPI_COMM_WORLD);
 
-                if(rank > 0){
+                if(rank > zero){
 
-                    int lower_bound,upper_bound,V,n;
-                    MPI_Recv(&lower_bound, 1, MPI_INT, 0, t1, MPI_COMM_WORLD, &status);
-                    MPI_Recv(&upper_bound, 1, MPI_INT, 0, t1 + 1, MPI_COMM_WORLD, &status);
-                    MPI_Recv(&V, 1, MPI_INT, 0, t1 + 2, MPI_COMM_WORLD, &status);
-                    MPI_Recv(&n, 1, MPI_INT, 0, t1 + 3, MPI_COMM_WORLD, &status);
-                    int localWalks = 0;
+                    int low_element,high_element,V,n;
+                    MPI_Recv(&low_element,one, MPI_INT, zero, t1, MPI_COMM_WORLD, &status);
+                    MPI_Recv(&high_element,one, MPI_INT, zero, t1 +one, MPI_COMM_WORLD, &status);
+                    MPI_Recv(&V,one, MPI_INT, zero, t1 + 2, MPI_COMM_WORLD, &status);
+                    MPI_Recv(&n,one, MPI_INT, zero, t1 + 3, MPI_COMM_WORLD, &status);
+                    int localWalks = zero;
 
-                    int cnt = 0;
-                    for(int node = lower_bound;node <= upper_bound;node++){
-                        dfs(graph,vis,node,node,n-1,&cnt,V);
-                        vis[node] = 1;
+                    int cnt = zero;
+                    for(int node = low_element;node <= high_element;node++){
+                        dfs(visited,node,node,n-1,&cnt,V);
+                        visited[node] =one;
                     }
 
-                    MPI_Send(&cnt, 1, MPI_INT, 0, t2, MPI_COMM_WORLD);
+                    MPI_Send(&cnt,one, MPI_INT, zero, t2, MPI_COMM_WORLD);
                 }
 
-                if(rank == 0){
+                if(rank == zero){
 
-                    int x;
-                    for(int src = 1;src < numprocs;++src){
-                        MPI_Recv(&x, 1, MPI_INT, src, t2, MPI_COMM_WORLD, &status);
-                        totalCycles += x;
+                    int y;
+                    for(int src = one;src < numprocs;++src){
+                        MPI_Recv(&y, one, MPI_INT, src, t2, MPI_COMM_WORLD, &status);
+                        totalCycles += y;
                     }
                     return totalCycles/2;
                 }
@@ -97,10 +100,11 @@ int func(int t1, int t2, int V, int n,int rank, int numprocs)
             }
 
     int main(int argc, char** argv){
-  int numprocs,rank;
+      int numprocs,rank;
     MPI_Init (&argc, &argv);
-    MPI_Comm_rank (MPI_COMM_WORLD, &rank);
     MPI_Comm_size (MPI_COMM_WORLD, &numprocs);
+    MPI_Comm_rank (MPI_COMM_WORLD, &rank);
+
         int V;
 
     if(rank == 0){
@@ -110,8 +114,8 @@ int func(int t1, int t2, int V, int n,int rank, int numprocs)
             int s,d;
             for(int i = 0;i < e;i++){
                 scanf("%d %d",&s,&d);
-          s--;
-          d--;
+                s--;
+                d--;
                 graph[s][d] = 1;
                 graph[d][s] = 1;
             }
